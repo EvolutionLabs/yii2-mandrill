@@ -725,10 +725,12 @@ class Message extends BaseMessage
      * - fileName: name, which should be used to attach file.
      * - contentType: attached file MIME type.
      *
-     * @return \nickcv\mandrill\Message
+     * @return bool|string
      */
     public function embed($fileName, array $options = [])
     {
+        $images = $this->getEmbeddedContent();
+
         if (file_exists($fileName) && !is_dir($fileName) && strpos(FileHelper::getMimeType($fileName), 'image') === 0) {
             $purifiedOptions = [
                 'fileName' => ArrayHelper::getValue($options, 'fileName', basename($fileName)),
@@ -737,7 +739,13 @@ class Message extends BaseMessage
             $this->embedContent(file_get_contents($fileName), $purifiedOptions);
         }
 
-        return $this;
+        $newImages = $this->getEmbeddedContent();
+        $newImageCount = count($newImages);
+        if(count($images) !== $newImageCount){
+            $lastInsertedImage = $newImages[$newImageCount - 1];
+            return 'cid:' . $lastInsertedImage['name'];
+        }
+        return false;
     }
 
     /**
